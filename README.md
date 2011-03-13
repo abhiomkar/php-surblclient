@@ -1,8 +1,12 @@
 PHP Client Library for the surbl.org blacklists
------------------------------------
+===============================================
 
 More details at: [http://www.surbl.org/guidelines](http://www.surbl.org/guidelines)
 
+Usage:
+-----
+
+    require_once('surblclient.php');
 
     $url_c = new Blacklist("http://test.surbl.org");
 
