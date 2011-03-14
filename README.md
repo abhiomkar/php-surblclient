@@ -20,3 +20,6 @@ Usage:
 
 This is ported from surblclient of Python. If you are looking for a Python SURBL Client: [https://github.com/infixfilip/surblclient](https://github.com/infixfilip/surblclient)
 
+Contributors:
+-----
+Abhinay Omkar  <<abhiomkar+nospam@gmail.com>>
