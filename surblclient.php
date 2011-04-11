@@ -1,11 +1,20 @@
 <?php
 
 /*******************************************************************************
-Version: 0.1 
+Version: 0.2 
 Website: http://abhiomkar.in
 Author: Abhinay Omkar abhiomkar@gmail.com
 Title: SURBL Client 
 Description: PHP Client Library for the surbl.org blacklists
+
+Change Log:
+v0.2
+----
+- using tlds list of 2 and 3 levels provided by surbl.org
+- lot of improvements and bug fixes
+
+v0.1
+----
 This is ported from surblclient of Python 
 
 Licensed under The MIT License
@@ -40,21 +49,20 @@ class Blacklist {
 	    }
 	
 	    # Choose the right "depth"...
-	    if ($this->_two_level_tlds($domain)) {
+	    if ($this->_three_level_tlds($domain)) {
+            # For any domain on the three level list, check it at the fourth level.
+	    	$n = 4;
+	    }
+	    else if ($this->_two_level_tlds($domain)){
+            # For any domain on the two level list, check it at the third level.
 	    	$n = 3;
 	    }
-	    else{
-	    	$n = 2;
-	    }
+        else {
+            # For any other domain, check it at the second level.
+            $n = 2;
+        }
 	    
 	    return implode('.', array_slice(explode('.', $domain), -$n));
-	}
-	
-	function getAddrByHost($host, $timeout = 3) {
-	   $query = `nslookup -timeout=$timeout -retry=1 $host`;
-	   if(preg_match('/\nAddress: (.*)\n/', $query, $matches))
-	      return trim($matches[1]);
-	   return $host;
 	}
 	
 	function lookup($domain) {
@@ -73,6 +81,7 @@ class Blacklist {
 		
 		# returns the same host name if it couldn't resolve, otherwise, returns the IP Address
 		$ip = gethostbyname($lookup);
+        # Rudimentary way of validating IP Address, but this works.
 		if (preg_match("/\d+\.\d+\.\d+\.\d+/", $ip)) {
 			$last_octal_arr = array_slice(explode('.', $ip), -1);
 			$last_octal = $last_octal_arr[0];
@@ -92,147 +101,46 @@ class Blacklist {
 	}
 	
 	
-	function _two_level_tlds($domain) {
-		if (preg_match("/(?:^|\.)
-		(?:(?:com|edu|gov|net|mil|org)\.ac
-		|(?:com|net|org|gov|ac|co|sch|pro)\.ae
-		|(?:com|org|edu|gov)\.ai
-		|(?:com|net|org|gov|mil|edu|int)\.ar
-		|(?:co|ac|or|gv|priv)\.at
-		|(?:com|gov|org|edu|id|oz|info|net|asn|csiro|telememo|conf|otc|id)\.au
-		|(?:com|net|org)\.az
-		|(?:com|net|org)\.bb
-		|(?:ac|belgie|dns|fgov)\.be
-		|(?:com|gov|net|edu|org)\.bh
-		|(?:com|edu|gov|org|net)\.bm
-		|(?:adm|adv|agr|am|arq|art|ato|bio|bmd|cim|cng|cnt|com|coop|ecn|edu|eng|esp|etc|eti|far|fm|fnd|fot|fst|g12|ggf|gov|imb|ind|inf|jor|lel|mat|med|mil|mus|net|nom|not|ntr|odo|org|ppg|pro|psc|psi|qsl|rec|slg|srv|tmp|trd|tur|tv|vet|zlg)\.br
-		|(?:com|net|org)\.bs
-		|(?:com|net|org)\.bz
-		|(?:ab|bc|mb|nb|nf|nl|ns|nt|nu|on|pe|qc|sk|yk|gc)\.ca
-		|(?:co|net|org|edu|gov)\.ck
-		|(?:com|edu|gov|net|org|ac|ah|bj|cq|gd|gs|gx|gz|hb|he|hi|hk|hl|hn|jl|js|ln|mo|nm|nx|qh|sc|sn|sh|sx|tj|tw|xj|xz|yn|zj)\.cn
-		|(?:arts|com|edu|firm|gov|info|int|nom|mil|org|rec|store|web)\.co
-		|(?:ac|co|ed|fi|go|or|sa)\.cr
-		|(?:com|net|org)\.cu
-		|(?:ac|com|gov|net|org)\.cy
-		|(?:co)\.dk
-		|(?:art|com|edu|gov|gob|org|mil|net|sld|web)\.do
-		|(?:com|org|net|gov|edu|ass|pol|art)\.dz
-		|(?:com|k12|edu|fin|med|gov|mil|org|net)\.ec
-		|(?:com|pri|fie|org|med)\.ee
-		|(?:com|edu|eun|gov|net|org|sci)\.eg
-		|(?:com|net|org|edu|mil|gov|ind)\.er
-		|(?:com|org|gob|edu|nom)\.es
-		|(?:com|gov|org|edu|net|biz|name|info)\.et
-		|(?:ac|com|gov|id|org|school)\.fj
-		|(?:com|ac|gov|net|nom|org)\.fk
-		|(?:asso|nom|barreau|com|prd|presse|tm|aeroport|assedic|avocat|avoues|cci|chambagri|chirurgiens-dentistes|experts-comptables|geometre-expert|gouv|greta|huissier-justice|medecin|notaires|pharmacien|port|veterinaire)\.fr
-		|(?:com|edu|gov|mil|net|org|pvt)\.ge
-		|(?:co|org|sch|ac|gov|ltd|ind|net|alderney|guernsey|sark)\.gg
-		|(?:com|edu|gov|net|org)\.gr
-		|(?:com|edu|net|gob|org|mil|ind)\.gt
-		|(?:com|edu|net|org|gov|mil)\.gu
-		|(?:com|net|org|idv|gov|edu)\.hk
-		|(?:co|2000|erotika|jogasz|sex|video|info|agrar|film|konyvelo|shop|org|bolt|forum|lakas|suli|priv|casino|games|media|szex|sport|city|hotel|news|tozsde|tm|erotica|ingatlan|reklam|utazas)\.hu
-		|(?:ac|co|go|mil|net|or)\.id
-		|(?:co|net|org|ac|gov|k12|muni|idf)\.il
-		|(?:co|net|org|ac|lkd\.co|gov|nic|plc\.co)\.im
-		|(?:co|net|ac|ernet|gov|nic|res|gen|firm|mil|org|ind)\.in
-		|(?:ac|co|gov|id|net|org|sch)\.ir
-		|(?:ac|co|net|org|gov|ind|jersey|ltd|sch)\.je
-		|(?:com|org|net|gov|edu|mil)\.jo
-		|(?:ad|ac|co|go|or|ne|gr|ed|lg|net|org|gov|hokkaido|aomori|iwate|miyagi|akita|yamagata|fukushima|ibaraki|tochigi|gunma|saitama|chiba|tokyo|kanagawa|niigata|toyama|ishikawa|fukui|yamanashi|nagano|gifu|shizuoka|aichi|mie|shiga|kyoto|osaka|hyogo|nara|wakayama|tottori|shimane|okayama|hiroshima|yamaguchi|tokushima|kagawa|ehime|kochi|fukuoka|saga|nagasaki|kumamoto|oita|miyazaki|kagoshima|okinawa|sapporo|sendai|yokohama|kawasaki|nagoya|kobe|kitakyushu|utsunomiya|kanazawa|takamatsu|matsuyama)\.jp
-		|(?:com|net|org|edu|gov|mil)\.kg
-		|(?:com|net|org|per|edu|gov|mil)\.kh
-		|(?:ac|co|go|ne|or|pe|re|seoul|kyonggi)\.kr
-		|(?:com|net|org|edu|gov)\.kw
-		|(?:com|net|org)\.la
-		|(?:com|org|net|edu|gov|mil)\.lb
-		|(?:com|edu|gov|net|org)\.lc
-		|(?:com|net|org|edu|gov|mil|id|asn|conf)\.lv
-		|(?:com|net|org)\.ly
-		|(?:co|net|org|press|ac)\.ma
-		|(?:com)\.mk
-		|(?:com|net|org|edu|gov)\.mm
-		|(?:com|org|edu|gov|museum)\.mn
-		|(?:com|net|org|edu|gov)\.mo
-		|(?:com|net|org|edu|tm|uu)\.mt
-		|(?:com|net|org|gob|edu)\.mx
-		|(?:com|org|gov|edu|net)\.my
-		|(?:com|org|net|alt|edu|cul|unam|telecom)\.na
-		|(?:com|net|org)\.nc
-		|(?:ac|edu|sch|com|gov|org|net)\.ng
-		|(?:gob|com|net|edu|nom|org)\.ni
-		|(?:com|net|org|gov|edu)\.np
-		|(?:ac|co|cri|gen|geek|govt|iwi|maori|mil|net|org|school)\.nz
-		|(?:com|co|edu|ac|gov|net|org|mod|museum|biz|pro|med)\.om
-		|(?:com|net|org|edu|ac|gob|sld)\.pa
-		|(?:edu|gob|nom|mil|org|com|net)\.pe
-		|(?:com|net|ac)\.pg
-		|(?:com|net|org|mil|ngo)\.ph
-		|(?:aid|agro|atm|auto|biz|com|edu|gmina|gsm|info|mail|miasta|media|mil|net|nieruchomosci|nom|org|pc|powiat|priv|realestate|rel|sex|shop|sklep|sos|szkola|targi|tm|tourism|travel|turystyka)\.pl
-		|(?:com|net|edu|org|fam|biz|web|gov|gob|gok|gon|gop|gos)\.pk
-		|(?:edu|gov|plo|sec)\.ps
-		|(?:com|edu|gov|int|net|nome|org|publ)\.pt
-		|(?:com|net|org|edu)\.py
-		|(?:com|net|org|edu|gov)\.qa
-		|(?:asso|com|nom)\.re
-		|(?:com|org|tm|nt|nom|info|rec|arts|firm|store|www)\.ro
-		|(?:ac|adygeya|altai|amur|amursk|arkhangelsk|astrakhan|baikal|bashkiria|belgorod|bir|bryansk|buryatia|cbg|chel|chelyabinsk|chita|chukotka|chuvashia|cmw|com|dagestan|dudinka|e-burg|edu|fareast|gov|grozny|int|irkutsk|ivanovo|izhevsk|jamal|jar|joshkar-ola|k-uralsk|kalmykia|kaluga|kamchatka|karelia|kazan|kchr|kemerovo|khabarovsk|khakassia|khv|kirov|kms|koenig|komi|kostroma|krasnoyarsk|kuban|kurgan|kursk|kustanai|kuzbass|lipetsk|magadan|magnitka|mari-el|mari|marine|mil|mordovia|mosreg|msk|murmansk|mytis|nakhodka|nalchik|net|nkz|nnov|norilsk|nov|novosibirsk|nsk|omsk|orenburg|org|oryol|oskol|palana|penza|perm|pp|pskov|ptz|pyatigorsk|rnd|rubtsovsk|ryazan|sakhalin|samara|saratov|simbirsk|smolensk|snz|spb|stavropol|stv|surgut|syzran|tambov|tatarstan|test|tom|tomsk|tsaritsyn|tsk|tula|tuva|tver|tyumen|udm|udmurtia|ulan-ude|vdonsk|vladikavkaz|vladimir|vladivostok|volgograd|vologda|voronezh|vrn|vyatka|yakutia|yamal|yaroslavl|yekaterinburg|yuzhno-sakhalinsk|zgrad)\.ru
-		|(?:com|edu|sch|med|gov|net|org|pub)\.sa
-		|(?:com|net|org|edu|gov)\.sb
-		|(?:com|net|org|edu|sch|med|gov)\.sd
-		|(?:tm|press|parti|brand|fh|fhsk|fhv|komforb|kommunalforbund|komvux|lanarb|lanbib|naturbruksgymn|sshn|org|pp)\.se
-		|(?:com|net|org|edu|gov|per)\.sg
-		|(?:com|net|org|edu|gov|mil)\.sh
-		|(?:gov|saotome|principe|consulado|embaixada|org|edu|net|com|store|mil|co)\.st
-		|(?:com|org|edu|gob|red)\.sv
-		|(?:com|net|org|gov)\.sy
-		|(?:ac|co|go|net|or)\.th
-		|(?:com|net|org|edunet|gov|ens|fin|nat|ind|info|intl|rnrt|rnu|rns|tourism)\.tn
-		|(?:com|net|org|edu|gov|mil|bbs|k12|gen)\.tr
-		|(?:co|com|org|net|biz|info|pro|int|coop|jobs|mobi|travel|museum|aero|name|gov|edu|nic|us|uk|ca|eu|es|fr|it|se|dk|be|de|at|au)\.tt
-		|(?:co)\.tv
-		|(?:com|net|org|edu|idv|gov)\.tw
-		|(?:com|gov|net|edu|org|in|cherkassy|ck|chernigov|cn|chernovtsy|cv|crimea|dnepropetrovsk|dp|donetsk|dn|ivano-frankivsk|if|kharkov|kh|kherson|ks|khmelnitskiy|km|kiev|kv|kirovograd|kr|lugansk|lg|lutsk|lviv|nikolaev|mk|odessa|od|poltava|pl|rovno|rv|sebastopol|sumy|ternopil|te|uzhgorod|vinnica|vn|zaporizhzhe|zp|zhitomir|zt)\.ua
-		|(?:ac|co|or|go)\.ug
-		|(?:co|me|org|edu|ltd|plc|net|sch|nic|ac|gov|nhs|police|mod)\.uk
-		|(?:dni|fed)\.us
-		|(?:com|edu|net|org|gub|mil)\.uy
-		|(?:com|net|org|co|edu|gov|mil|arts|bib|firm|info|int|nom|rec|store|tec|web)\.ve
-		|(?:co|net|org)\.vi
-		|(?:com|biz|edu|gov|net|org|int|ac|pro|info|health|name)\.vn
-		|(?:com|edu|net|org|de|ch|fr)\.vu
-		|(?:com|net|org|gov|edu)\.ws
-		|(?:ac|co|edu|org)\.yu
-		|(?:com|net|org|gov|edu|mil)\.ye
-		|(?:ac|alt|bourse|city|co|edu|gov|law|mil|net|ngo|nom|org|school|tm|web)\.za
-		|(?:co|ac|org|gov)\.zw
-		|(?:eu)\.org
-		|(?:au|br|cn|de)\.com
-		|(?:de)\.net
-		|(?:eu|gb)\.com
-		|(?:gb)\.net
-		|(?:hu|no|qc|ru|sa|se|uk)\.com
-		|(?:uk)\.net
-		|(?:us|uy|za)\.com
-		|(?:dk)\.org
-		|(?:tel)\.no
-		|(?:fax|mob|mobil|mobile|tel|tlf)\.nr
-		|(?:e164)\.arpa)$
-		|(?:surbl)\.org/i", $domain )) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
+    function _three_level_tlds($domain) {
+        $three_level_tlds_data = file("three-level-tlds.data");
 
+        foreach($three_level_tlds_data as $tld) {
+            $tld = trim($tld);
+            if($this->_ends_with($domain, $tld)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function _two_level_tlds($domain) {
+        $two_level_tlds_data = file("two-level-tlds.data");
+
+        foreach($two_level_tlds_data as $tld) {
+            $tld = trim($tld);
+            if($this->_ends_with($domain, $tld)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    # Credits to http://stackoverflow.com/questions/834303/php-startswith-and-endswith-functions/834355#834355
+    function _ends_with($haystack, $needle) {
+        $length = strlen($needle);
+        $start =  $length *-1; //negative
+        return (substr($haystack, $start, $length) === $needle);
+    }
+    
 }
 
 # USAGE
+# - Download 'two-level-tlds.data' & 'three-level-tlds.data' files to the same directory
+# - the argument to Blacklist class should be a valid URL
 /*
-$url_c = new Blacklist("http://reddit.com");
+$url_c = new Blacklist("http://test.surbl.org");
 
 if($url_c->spam_check) {
 	echo "SPAM SPAM!";
