@@ -20,3 +20,10 @@ Usage:
 
 This is ported from surblclient of Python. If you are looking for a Python SURBL Client: [https://github.com/infixfilip/surblclient](https://github.com/infixfilip/surblclient)
 
+Blogs:
+-------
+[PHP Client Library for the surbl.org blacklists](http://blog.abhiomkar.in/2011/03/14/php-client-library-for-the-surbl-org-blacklists/)
+
+Contributors:
+-----
+Abhinay Omkar  <<abhiomkar+nospam@gmail.com>>
